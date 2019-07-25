@@ -1,0 +1,303 @@
+buildCmd: gradle build -x test
+testCmd: true
+skipVerification: true
+# Copyright 2019 Diffblue Limited. All Rights Reserved.
+cbmcArguments:
+  # Do not generate coverage comments on generated tests.
+  java-generate-no-comments: true
+  # Constrain the size of arrays created in the analyzed code.
+  java-max-vla-length: 100000
+phases:
+  -
+    # Phase 0 PRETTY, SIMPLE and SMART - pretty tests, do not test private methods directly, Smart-Harness
+    timeout: 180
+    cbmcArguments:
+      # Use simple models first containers (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 1500
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 1
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # Instrument the file as opposed to the function only
+      cover-only: file
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Instantiate classes using the simplest constructor strategy
+      smart-harness: simplest-constructor-and-nondet
+  -
+    # Phase 1 PRETTY AND COMPLEX - standard models only, pretty tests, do not test private methods directly, input factory
+    timeout: 180
+    cbmcArguments:
+      # Use the standard models library
+      classpath: '/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 2
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+      # Limit input factory recursive depth (default 0 = no recursion allowed)
+      java-test-input-factory-bmc-recursion-limit: 4
+  -
+    # Phase 2 FIFO Strategy - pretty tests, do not test private methods directly, fifo
+    timeout: 100
+    cbmcArguments:
+      # Use the standard models library
+      classpath: '/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Add constraint that strings are printable
+      max-nondet-string-length: 100
+      # Explores the program tree breadth-first.
+      paths: fifo
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: false
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+  -
+    # Phase 3 Exceptions - do not test private methods directly
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Bound the length of input strings.
+      max-nondet-string-length: 30
+      # Add constraint that strings are printable
+      string-printable: false
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: true
+      # Set an upper bound on loop unwinding.
+      unwind: 3
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+  -
+    # Phase 4 Direct testing - test private methods directly, increased reflection
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 1500
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 1
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # If the logs contain output of the following then proceed to phase X
+    nextPhase:
+      # If the function is not analysable then do not pass onto the next phase
+      not_analyzed: null
+  -
+    # PHASE 5 Mocking - aggressive mocking, do not test private methods directly
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 3000
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Only load the class (and related inner/outer classes) containing the method under test,
+      load-containing-class-only: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Bound the length of input strings.
+      max-nondet-string-length: 100
+      # Add constraint that strings are printable
+      string-printable: false
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: true
+      # Set an upper bound on loop unwinding.
+      unwind: 3
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+units:
+ - target:
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/Utils.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/Utils.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/Sha256Hash.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/Sha256Hash.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/Utils$Pair.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/Utils.java
+ - target:
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/BloomFilter.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/BloomFilter.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/TransactionOutput.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/TransactionOutput.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/Message.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/Message.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/UnsafeByteArrayOutputStream.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/UnsafeByteArrayOutputStream.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/PartialMerkleTree.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/PartialMerkleTree.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/Utils.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/Utils.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/TransactionOutPoint.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/TransactionOutPoint.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/script/ScriptChunk.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/script/ScriptChunk.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/NetworkParameters.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/NetworkParameters.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/VerificationException.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/VerificationException.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/Transaction.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/Transaction.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/script/Script.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/script/Script.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/BloomFilter$BloomUpdate.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/BloomFilter.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/script/ScriptPattern.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/script/ScriptPattern.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/VarInt.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/VarInt.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/ChildMessage.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/ChildMessage.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/script/ScriptException.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/script/ScriptException.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/ProtocolException.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/ProtocolException.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/crypto/LazyECPoint.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/crypto/LazyECPoint.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/FilteredBlock.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/FilteredBlock.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/PartialMerkleTree$ValuesUsed.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/PartialMerkleTree.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/TransactionWitness.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/TransactionWitness.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/script/ScriptOpCodes.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/script/ScriptOpCodes.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/MessageSerializer.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/MessageSerializer.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/Block.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/Block.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/TransactionInput.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/TransactionInput.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/ECKey.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/ECKey.java
+   - dir: core/build/classes/java/main
+     file: org/bitcoinj/core/Sha256Hash.class
+     sourceDir: core/src/main/java
+     sourceFile: org/bitcoinj/core/Sha256Hash.java
